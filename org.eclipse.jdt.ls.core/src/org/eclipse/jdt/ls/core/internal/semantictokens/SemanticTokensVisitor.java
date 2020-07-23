@@ -18,18 +18,25 @@ import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.BooleanLiteral;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
+import org.eclipse.jdt.core.dom.NullLiteral;
+import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
+import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.IDocument;
@@ -227,6 +234,48 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			IBinding parentBinding = qualifiedName.resolveBinding();
 			return parentBinding instanceof IPackageBinding || parentBinding instanceof ITypeBinding;
 		}
+	}
+
+	@Override
+	public boolean visit(StringLiteral node) {
+		addToken(node, TokenType.STRING);
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(CharacterLiteral node) {
+		addToken(node, TokenType.CHARACTER);
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(NumberLiteral node) {
+		addToken(node, TokenType.NUMBER);
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(BooleanLiteral node) {
+		addToken(node, TokenType.KEYWORD);
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(NullLiteral node) {
+		addToken(node, TokenType.KEYWORD);
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(PrimitiveType node) {
+		addToken(node, TokenType.PRIMITIVE_TYPE);
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(Modifier node) {
+		addToken(node, TokenType.MODIFIER);
+		return super.visit(node);
 	}
 
 	@Override

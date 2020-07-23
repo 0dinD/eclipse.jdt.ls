@@ -149,6 +149,58 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		assertToken(decodedTokens, 10, 19, 5, "annotationMember", "public", "abstract");
 	}
 
+	@Test
+	public void testSemanticTokens_Literals() throws JavaModelException {
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Literals.java");
+
+		assertToken(decodedTokens, 4, 12, 8, "string");
+		assertToken(decodedTokens, 5, 10, 3, "character");
+		assertToken(decodedTokens, 6, 9, 3, "number");
+		assertToken(decodedTokens, 7, 11, 5, "number");
+		assertToken(decodedTokens, 8, 12, 5, "number");
+		assertToken(decodedTokens, 9, 10, 4, "number");
+		assertToken(decodedTokens, 10, 9, 5, "number");
+		assertToken(decodedTokens, 11, 9, 4, "number");
+		assertToken(decodedTokens, 12, 9, 5, "number");
+		assertToken(decodedTokens, 13, 14, 4, "keyword");
+		assertToken(decodedTokens, 14, 14, 5, "keyword");
+		assertToken(decodedTokens, 15, 12, 4, "keyword");
+	}
+
+	@Test
+	public void testSemanticTokens_PrimitiveTypes() throws JavaModelException {
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("PrimitiveTypes.java");
+
+		assertToken(decodedTokens, 4, 1, 4, "primitiveType");
+		assertToken(decodedTokens, 5, 1, 5, "primitiveType");
+		assertToken(decodedTokens, 6, 1, 4, "primitiveType");
+		assertToken(decodedTokens, 7, 1, 3, "primitiveType");
+		assertToken(decodedTokens, 8, 1, 4, "primitiveType");
+		assertToken(decodedTokens, 9, 1, 5, "primitiveType");
+		assertToken(decodedTokens, 10, 1, 6, "primitiveType");
+		assertToken(decodedTokens, 11, 1, 7, "primitiveType");
+		assertToken(decodedTokens, 12, 1, 4, "primitiveType");
+	}
+
+	@Test
+	public void testSemanticTokens_Modifiers() throws JavaModelException {
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Modifiers.java");
+
+		assertToken(decodedTokens, 2, 7, 8, "modifier");
+		assertToken(decodedTokens, 4, 1, 6, "modifier");
+		assertToken(decodedTokens, 5, 1, 9, "modifier");
+		assertToken(decodedTokens, 6, 1, 7, "modifier");
+		assertToken(decodedTokens, 7, 1, 6, "modifier");
+		assertToken(decodedTokens, 8, 1, 8, "modifier");
+		assertToken(decodedTokens, 9, 1, 5, "modifier");
+		assertToken(decodedTokens, 10, 1, 6, "modifier");
+		assertToken(decodedTokens, 11, 1, 12, "modifier");
+		assertToken(decodedTokens, 12, 1, 9, "modifier");
+		assertToken(decodedTokens, 13, 1, 8, "modifier");
+		assertToken(decodedTokens, 14, 1, 8, "modifier");
+		assertToken(decodedTokens, 17, 2, 7, "modifier");
+	}
+
 	private void assertModifiers(List<String> tokenModifiers, int encodedModifiers, List<String> modifierStrings) {
 		int cnt = 0;
 		for (int i=0; i<tokenModifiers.size(); i++) {
