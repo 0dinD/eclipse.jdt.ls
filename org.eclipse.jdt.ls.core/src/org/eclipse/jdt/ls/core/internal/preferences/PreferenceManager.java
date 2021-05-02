@@ -46,6 +46,7 @@ import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ShowDeprecatedCompletions;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.text.templates.ContextTypeRegistry;
@@ -197,6 +198,21 @@ public class PreferenceManager {
 		preferences.updateTabSizeInsertSpaces(options);
 		JavaCore.setOptions(options);
 		// TODO serialize preferences
+	}
+
+	/**
+	 * Configures various additional JavaCore options.
+	 * Make sure to call this after resetting JavaCore options.
+	 */
+	public void configureJavaCoreOptions() {
+		Hashtable<String, String> javaOptions = JavaCore.getOptions();
+		if (preferences.getShowDeprecatedCompletions() == ShowDeprecatedCompletions.never) {
+			javaOptions.put(JavaCore.CODEASSIST_DEPRECATION_CHECK, JavaCore.ENABLED);
+		}
+		else {
+			javaOptions.put(JavaCore.CODEASSIST_DEPRECATION_CHECK, JavaCore.DISABLED);
+		}
+		JavaCore.setOptions(javaOptions);
 	}
 
 	private void preferencesChanged(Preferences oldPreferences, Preferences newPreferences) {

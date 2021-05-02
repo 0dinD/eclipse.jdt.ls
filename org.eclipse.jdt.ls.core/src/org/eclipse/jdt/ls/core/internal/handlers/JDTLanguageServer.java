@@ -473,6 +473,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		}
 		FormatterManager.configureFormatter(preferenceManager.getPreferences());
 		StandardProjectsManager.configureSettings(preferenceManager.getPreferences());
+		preferenceManager.configureJavaCoreOptions();
 		logInfo(">> New configuration: " + settings);
 	}
 

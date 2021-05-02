@@ -235,6 +235,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);
 		}
+		preferenceManager.configureJavaCoreOptions();
 	}
 
 	@Override

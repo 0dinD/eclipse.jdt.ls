@@ -13,6 +13,9 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import org.eclipse.jdt.core.CompletionProposal;
+import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ShowDeprecatedCompletions;
 
 /**
  * Helper class for creating sort texts from relevance
@@ -51,7 +54,14 @@ public final class SortTextHelper {
 	 * @return the relevance for <code>proposal</code>
 	 */
 	public static String computeSortText(CompletionProposal proposal) {
-		final int baseRelevance= proposal.getRelevance() * 16;
+		int baseRelevance= proposal.getRelevance() * 16;
+		if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences()
+			.getShowDeprecatedCompletions() == ShowDeprecatedCompletions.belowOthers
+			&& Flags.isDeprecated(proposal.getFlags())
+		) {
+			baseRelevance *= 0.5;
+		}
+
 		switch (proposal.getKind()) {
 		case CompletionProposal.LABEL_REF:
 			return convertRelevance( baseRelevance + 1);

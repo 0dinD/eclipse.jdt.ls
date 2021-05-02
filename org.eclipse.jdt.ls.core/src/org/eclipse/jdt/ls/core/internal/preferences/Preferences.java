@@ -320,6 +320,12 @@ public class Preferences {
 	public static final String JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY = "java.completion.guessMethodArguments";
 
 	/**
+	 * A named preference that controls the visibility of deprecated completion proposals.
+	 */
+	public static final String JAVA_COMPLETION_SHOW_DEPRECATED_KEY = "java.completion.showDeprecated";
+	public static final ShowDeprecatedCompletions JAVA_COMPLETION_SHOW_DEPRECATED_DEFAULT = ShowDeprecatedCompletions.belowOthers;
+
+	/**
 	 * A named preference that defines how member elements are ordered by code
 	 * actions.
 	 * <p>
@@ -483,6 +489,7 @@ public class Preferences {
 	private boolean foldingRangeEnabled;
 	private boolean selectionRangeEnabled;
 	private boolean guessMethodArguments;
+	private ShowDeprecatedCompletions showDeprecatedCompletions;
 	private boolean javaFormatComments;
 	private boolean hashCodeEqualsTemplateUseJava7Objects;
 	private boolean hashCodeEqualsTemplateUseInstanceof;
@@ -600,6 +607,21 @@ public class Preferences {
 		}
 	}
 
+	public static enum ShowDeprecatedCompletions {
+		always, never, belowOthers;
+
+		static ShowDeprecatedCompletions fromString(String value) {
+			if (value != null) {
+				try {
+					return valueOf(value);
+				} catch(Exception e) {
+					// Fall back to default value
+				}
+			}
+			return JAVA_COMPLETION_SHOW_DEPRECATED_DEFAULT;
+		}
+	}
+
 	public static class ReferencedLibraries {
 		private Set<String> include;
 		private Set<String> exclude;
@@ -705,6 +727,7 @@ public class Preferences {
 		foldingRangeEnabled = true;
 		selectionRangeEnabled = true;
 		guessMethodArguments = false;
+		showDeprecatedCompletions = JAVA_COMPLETION_SHOW_DEPRECATED_DEFAULT;
 		javaFormatComments = true;
 		hashCodeEqualsTemplateUseJava7Objects = false;
 		hashCodeEqualsTemplateUseInstanceof = false;
@@ -824,6 +847,9 @@ public class Preferences {
 
 		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
 		prefs.setGuessMethodArguments(guessMethodArguments);
+
+		String showDeprecatedCompletions = getString(configuration, JAVA_COMPLETION_SHOW_DEPRECATED_KEY);
+		prefs.setShowDeprecatedCompletions(ShowDeprecatedCompletions.fromString(showDeprecatedCompletions));
 
 		boolean hashCodeEqualsTemplateUseJava7Objects = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS, false);
 		prefs.setHashCodeEqualsTemplateUseJava7Objects(hashCodeEqualsTemplateUseJava7Objects);
@@ -1186,6 +1212,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setShowDeprecatedCompletions(ShowDeprecatedCompletions showDeprecatedCompletions) {
+		this.showDeprecatedCompletions = showDeprecatedCompletions;
+		return this;
+	}
+
 	public Preferences setJavaFormatEnabled(boolean enabled) {
 		this.javaFormatEnabled = enabled;
 		return this;
@@ -1461,6 +1492,10 @@ public class Preferences {
 
 	public boolean isGuessMethodArguments() {
 		return guessMethodArguments;
+	}
+
+	public ShowDeprecatedCompletions getShowDeprecatedCompletions() {
+		return showDeprecatedCompletions;
 	}
 
 	public boolean isHashCodeEqualsTemplateUseJava7Objects() {
