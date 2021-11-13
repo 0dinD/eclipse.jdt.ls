@@ -22,13 +22,20 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.ProgressProvider;
 import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.ProgressReport;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusReport;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.ProgressParams;
+import org.eclipse.lsp4j.WorkDoneProgressBegin;
+import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
+import org.eclipse.lsp4j.WorkDoneProgressEnd;
+import org.eclipse.lsp4j.WorkDoneProgressReport;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /**
  * Manager for creating {@link IProgressMonitor}s reporting progress to clients
@@ -160,20 +167,50 @@ public class ProgressReporterManager extends ProgressProvider {
 		protected String subTaskName;
 		protected int progress;
 		protected long lastReport = 0;
-		protected String progressId;
+		protected final String progressId;
+		protected boolean clientReady = false;
 
-		public ProgressReporter() {
-			super(null);
-			progressId = UUID.randomUUID().toString();
-		}
-
-		public ProgressReporter(Job job) {
-			this();
-			this.job = job;
-		}
+		// TODO: Some progress reports are not very detailed
+		// seems like an empty taskName is provided somtimes (why???)
+		// if the taskName is empty, it would seem like we should ignore it (treat as background task)
 
 		public ProgressReporter(CancelChecker checker) {
 			super(checker);
+			progressId = UUID.randomUUID().toString();
+			// maybe just set the future as field instead
+			// to guarantee everyone can subscribe and get notified correctly
+			// but need to make sure we don't subscribe multiple times
+			client.createProgress(new WorkDoneProgressCreateParams(Either.forLeft(progressId)))
+				.whenComplete((res, err) -> {
+					// also check error
+					if (isDone()) {
+						client.notifyProgress(new ProgressParams(
+							Either.forLeft(progressId),
+							Either.forLeft(new WorkDoneProgressEnd())
+						));
+						return;
+					}
+
+					WorkDoneProgressBegin progress = new WorkDoneProgressBegin();
+					progress.setTitle(taskName);
+					progress.setMessage(subTaskName);
+					progress.setPercentage(percentDone());
+					client.notifyProgress(new ProgressParams(
+						Either.forLeft(progressId),
+						Either.forLeft(progress)
+					));
+					clientReady = true;
+				});
+		}
+
+		public ProgressReporter() {
+			this((CancelChecker) null);
+		}
+
+		// check cancellation? or why is this even a thing?
+		public ProgressReporter(Job job) {
+			this();
+			this.job = job;
 		}
 
 		@Override
@@ -186,7 +223,7 @@ public class ProgressReporterManager extends ProgressProvider {
 		public void beginTask(String task, int totalWork) {
 			taskName = task;
 			this.totalWork = totalWork;
-			sendProgress();
+			throttledProgress();
 		}
 
 		@Override
@@ -196,24 +233,56 @@ public class ProgressReporterManager extends ProgressProvider {
 				// completed or failed transfer
 				return;
 			}
-			sendProgress();
+			throttledProgress();
 		}
 
 		@Override
 		public void worked(int work) {
 			progress += work;
-			sendProgress();
+			throttledProgress();
 		}
 
 		@Override
 		public void done() {
 			super.done();
-			sendProgress();
+			if (!clientReady) {
+				return;
+			}
+			client.notifyProgress(new ProgressParams(
+				Either.forLeft(progressId),
+				Either.forLeft(new WorkDoneProgressEnd())
+			));
 		}
 
 		@Override
 		public boolean isDone() {
 			return super.isDone() || (totalWork > 0 && progress >= totalWork);
+		}
+
+		private Integer percentDone() {
+			if (totalWork < 2) {
+				// Indicates an unknown amount of progress
+				return null;
+			}
+			return progress / totalWork * 100;
+		}
+
+		// don't skip early, just defer (so we don't miss a long running subtask after spam)
+		private void throttledProgress() {
+			if (!clientReady) {
+				return;
+			}
+			long currentTime = System.currentTimeMillis();
+			if (lastReport == 0 || isDone() || (currentTime - lastReport >= delay)) {
+				lastReport = currentTime;
+				WorkDoneProgressReport progress = new WorkDoneProgressReport();
+				progress.setMessage(subTaskName);
+				progress.setPercentage(percentDone());
+				client.notifyProgress(new ProgressParams(
+					Either.forLeft(progressId),
+					Either.forLeft(progress)
+				));
+			}
 		}
 
 		private void sendProgress() {
